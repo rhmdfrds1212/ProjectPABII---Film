@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_application_film/screens/add_post_screen.dart';
 import 'package:flutter_application_film/screens/detail_screen.dart';
 import 'package:flutter_application_film/screens/sign_in_screen.dart';
+import 'package:flutter_application_film/screens/film_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,22 +21,23 @@ class _HomeScreenState extends State<HomeScreen> {
   String? selectedCategory;
 
   final List<String> categories = [
-    'Jalan Rusak',
-    'Marka Pudar',
-    'Lampu Mati',
-    'Trotoar Rusak',
-    'Rambu Rusak',
-    'Jembatan Rusak',
-    'Sampah Menumpuk',
-    'Saluran Tersumbat',
-    'Sungai Tercemar',
-    'Sampah Sungai',
-    'Pohon Tumbang',
-    'Taman Rusak',
-    'Fasilitas Rusak',
-    'Pipa Bocor',
-    'Vandalisme',
-    'Banjir',
+    'Aksi',
+    'Drama',
+    'Komedi',
+    'Horor',
+    'Romansa',
+    'Petualangan',
+    'Fiksi Ilmiah',
+    'Fantasi',
+    'Misteri',
+    'Thriller',
+    'Animasi',
+    'Dokumenter',
+    'Keluarga',
+    'Musikal',
+    'Sejarah',
+    'Kriminal',
+    'Perang',
     'Lainnya',
   ];
 
@@ -83,7 +85,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   (category) => ListTile(
                     title: Text(category),
                     trailing: selectedCategory == category
-                        ? Icon(Icons.check, color: Theme.of(context).colorScheme.primary)
+                        ? Icon(Icons.check,
+                            color: Theme.of(context).colorScheme.primary)
                         : null,
                     onTap: () => Navigator.pop(context, category),
                   ),
@@ -103,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Fasum",
+          "Film",
           style: TextStyle(
             color: Colors.green[600],
             fontWeight: FontWeight.bold,
@@ -114,6 +117,16 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: _showCategoryFilter,
             icon: const Icon(Icons.filter_list),
             tooltip: 'Filter Kategori',
+          ),
+          IconButton(
+            icon: const Icon(Icons.movie),
+            tooltip: 'Halaman Film',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FilmScreen()),
+              );
+            },
           ),
           IconButton(
             onPressed: signOut,
@@ -130,7 +143,8 @@ class _HomeScreenState extends State<HomeScreen> {
               .orderBy('createdAt', descending: true)
               .snapshots(),
           builder: (context, snapshot) {
-            if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+            if (!snapshot.hasData)
+              return const Center(child: CircularProgressIndicator());
 
             final posts = snapshot.data!.docs.where((doc) {
               final category = doc['category'] ?? 'Lainnya';
@@ -138,7 +152,8 @@ class _HomeScreenState extends State<HomeScreen> {
             }).toList();
 
             if (posts.isEmpty) {
-              return const Center(child: Text("Tidak ada laporan untuk kategori ini."));
+              return const Center(
+                  child: Text("Tidak ada laporan untuk kategori ini."));
             }
 
             return ListView.builder(
@@ -153,7 +168,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 final latitude = data['latitude'];
                 final longitude = data['longitude'];
                 final category = data['category'] ?? 'Lainnya';
-                final heroTag = 'fasum-image-${createdAt.millisecondsSinceEpoch}';
+                final heroTag =
+                    'fasum-image-${createdAt.millisecondsSinceEpoch}';
 
                 return InkWell(
                   onTap: () {
@@ -177,13 +193,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     elevation: 1,
                     margin: const EdgeInsets.all(10),
                     color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (imageBase64 != null)
                           ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(10)),
                             child: Hero(
                               tag: heroTag,
                               child: Image.memory(
@@ -195,7 +213,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -208,7 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               Text(
                                 formatTime(createdAt),
-                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.grey),
                               ),
                               const SizedBox(height: 12),
                               Text(

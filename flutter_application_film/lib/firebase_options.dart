@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'prj-pabii-film.firebasestorage.app',
     measurementId: 'G-3WHH4EGD5Q',
   );
+
 }

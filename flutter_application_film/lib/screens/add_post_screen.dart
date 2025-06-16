@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -33,10 +34,24 @@ class _AddPostScreenState extends State<AddPostScreen> {
   bool _isGenerating = false;
 
   final List<String> categories = [
-    'Jalan Rusak', 'Marka Pudar', 'Lampu Mati', 'Trotoar Rusak', 'Rambu Rusak',
-    'Jembatan Rusak', 'Sampah Menumpuk', 'Saluran Tersumbat', 'Sungai Tercemar',
-    'Sampah Sungai', 'Pohon Tumbang', 'Taman Rusak', 'Fasilitas Rusak',
-    'Pipa Bocor', 'Vandalisme', 'Banjir', 'Lainnya',
+    'Aksi',
+    'Drama',
+    'Komedi',
+    'Horor',
+    'Romansa',
+    'Petualangan',
+    'Fiksi Ilmiah',
+    'Fantasi',
+    'Misteri',
+    'Thriller',
+    'Animasi',
+    'Dokumenter',
+    'Keluarga',
+    'Musikal',
+    'Sejarah',
+    'Kriminal',
+    'Perang',
+    'Lainnya',
   ];
 
   @override
@@ -109,7 +124,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
       final imageBytes = await _image!.readAsBytes();
       final base64Image = base64Encode(imageBytes);
       const apiKey = 'AIzaSyDRYZmvqy-G5sbkqQ_u2IIR1KUKYxErD-w';
-      final url = 'https://generativelanguage.googleapis.com/v1/models/gemini2.0-flash:generateContent?key=$apiKey';
+      final url =
+          'https://generativelanguage.googleapis.com/v1/models/gemini2.0-flash:generateContent?key=$apiKey';
 
       final response = await http.post(
         Uri.parse(url),
@@ -126,7 +142,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 },
                 {
                   "text": """
-Berdasarkan foto ini, identifikasi satu kategori utama kerusakan fasilitas umum dari daftar berikut:
+Berdasarkan foto film  ini, identifikasi satu kategori utama kerusakan fasilitas umum dari daftar berikut:
 Jalan Rusak, Marka Pudar, Lampu Mati, Trotoar Rusak, Rambu Rusak, Jembatan Rusak, Sampah Menumpuk, Saluran Tersumbat, Sungai Tercemar, Sampah Sungai, Pohon Tumbang, Taman Rusak, Fasilitas Rusak, Pipa Bocor, Vandalisme, Banjir, dan Lainnya.
 
 Pilih kategori paling dominan dan buat deskripsi singkat. Format output:
@@ -152,7 +168,8 @@ Deskripsi: [deskripsi]
           for (var line in lines) {
             final l = line.toLowerCase();
             if (l.startsWith('kategori:')) category = line.substring(9).trim();
-            if (l.startsWith('deskripsi:')) description = line.substring(10).trim();
+            if (l.startsWith('deskripsi:'))
+              description = line.substring(10).trim();
           }
 
           setState(() {
@@ -221,7 +238,8 @@ Deskripsi: [deskripsi]
     try {
       await _getLocation();
 
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      final userDoc =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       final fullName = userDoc.data()?['fullName'] ?? 'Anonymous';
 
       await FirebaseFirestore.instance.collection('posts').add({
@@ -280,12 +298,14 @@ Deskripsi: [deskripsi]
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showSuccess(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -308,14 +328,30 @@ Deskripsi: [deskripsi]
                 child: _image != null
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(12),
-                        child: Image.file(
-                          _image!,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: kIsWeb
+                              ? (_base64Image != null
+                                  ? Image.memory(
+                                      base64Decode(_base64Image!),
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Center(
+                                      child: Icon(Icons.broken_image)))
+                              : (_image != null
+                                  ? Image.file(
+                                      _image!,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : const Center(
+                                      child: Icon(Icons.broken_image))),
                         ),
                       )
                     : const Center(
-                        child: Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
+                        child: Icon(Icons.add_a_photo,
+                            size: 50, color: Colors.grey),
                       ),
               ),
             ),
@@ -327,8 +363,15 @@ Deskripsi: [deskripsi]
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(height: 20, width: 100, color: Colors.grey[300], margin: const EdgeInsets.only(bottom: 12)),
-                    Container(height: 80, width: double.infinity, color: Colors.grey[300]),
+                    Container(
+                        height: 20,
+                        width: 100,
+                        color: Colors.grey[300],
+                        margin: const EdgeInsets.only(bottom: 12)),
+                    Container(
+                        height: 80,
+                        width: double.infinity,
+                        color: Colors.grey[300]),
                   ],
                 ),
               ),
@@ -382,7 +425,9 @@ Deskripsi: [deskripsi]
                   ? const SizedBox(
                       height: 24,
                       width: 24,
-                      child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Colors.white)),
+                      child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white)),
                     )
                   : const Text('Post', style: TextStyle(color: Colors.white)),
             ),

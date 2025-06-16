@@ -13,7 +13,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _animation;
 
@@ -36,7 +37,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // Navigate after delay
     Timer(const Duration(seconds: 3), () {
       final user = FirebaseAuth.instance.currentUser;
-      final destination = user != null ? const HomeScreen() : const SignInScreen();
+      final destination =
+          user != null ? const HomeScreen() : const SignInScreen();
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -60,7 +62,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         child: FadeTransition(
           opacity: _animation,
           child: Image.asset(
-            'assets/fasum_icon.png',
+            'assets/film_icon.png',
             width: 150,
             height: 150,
           ),
