@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:shimmer/shimmer.dart';
@@ -83,25 +84,47 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
-      final pickedFile = await _picker.pickImage(source: source);
-      if (pickedFile == null) return;
+      if (kIsWeb) {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          withData: true,
+        );
 
-      setState(() {
-        _image = File(pickedFile.path);
-        _aiCategory = null;
-        _aiDescription = null;
-        _descriptionController.clear();
-      });
+        if (result != null && result.files.single.bytes != null) {
+          final bytes = result.files.single.bytes!;
+          setState(() {
+            _image = null; // tidak bisa pakai File di web
+            _base64Image = base64Encode(bytes);
+            _aiCategory = null;
+            _aiDescription = null;
+            _descriptionController.clear();
+          });
 
-      await _compressAndEncodeImage();
-      await _generateDescriptionWithAI();
+          await _generateDescriptionWithAI();
+        } else {
+          _showError('Tidak ada gambar yang dipilih.');
+        }
+      } else {
+        final pickedFile = await _picker.pickImage(source: source);
+        if (pickedFile == null) return;
+
+        setState(() {
+          _image = File(pickedFile.path);
+          _aiCategory = null;
+          _aiDescription = null;
+          _descriptionController.clear();
+        });
+
+        await _compressAndEncodeImage();
+        await _generateDescriptionWithAI();
+      }
     } catch (e) {
-      _showError('Failed to pick image: $e');
+      _showError('Gagal memilih gambar: $e');
     }
   }
 
   Future<void> _compressAndEncodeImage() async {
-    if (_image == null) return;
+    if (_image == null || kIsWeb) return;
     try {
       final compressed = await FlutterImageCompress.compressWithFile(
         _image!.path,
@@ -111,7 +134,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
         setState(() => _base64Image = base64Encode(compressed));
       }
     } catch (e) {
-      _showError('Failed to compress image: $e');
+      _showError('Gagal kompres gambar: $e');
     }
   }
 
@@ -318,43 +341,27 @@ Deskripsi: [deskripsi]
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             GestureDetector(
-              onTap: _showImageSourceDialog,
-              child: Container(
-                height: 250,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: _image != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: ClipRRect(
+                onTap: _showImageSourceDialog,
+                child: Container(
+                  height: 250,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: _base64Image != null
+                      ? ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: kIsWeb
-                              ? (_base64Image != null
-                                  ? Image.memory(
-                                      base64Decode(_base64Image!),
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const Center(
-                                      child: Icon(Icons.broken_image)))
-                              : (_image != null
-                                  ? Image.file(
-                                      _image!,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    )
-                                  : const Center(
-                                      child: Icon(Icons.broken_image))),
+                          child: Image.memory(
+                            base64Decode(_base64Image!),
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(Icons.add_a_photo,
+                              size: 50, color: Colors.grey),
                         ),
-                      )
-                    : const Center(
-                        child: Icon(Icons.add_a_photo,
-                            size: 50, color: Colors.grey),
-                      ),
-              ),
-            ),
+                )),
             const SizedBox(height: 16),
             if (_isGenerating)
               Shimmer.fromColors(
