@@ -158,7 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Beranda Film"),
+        title: const Text("Film"),
+        backgroundColor: Colors.green,
         actions: [
           IconButton(
             onPressed: signOut,

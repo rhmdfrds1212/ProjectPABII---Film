@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
-class UlasanScreen extends StatelessWidget {
+class UlasanScreen extends StatefulWidget {
   const UlasanScreen({super.key});
 
-  final List<Map<String, dynamic>> ulasanList = const [
+  @override
+  State<UlasanScreen> createState() => _UlasanScreenState();
+}
+
+class _UlasanScreenState extends State<UlasanScreen> {
+  List<Map<String, dynamic>> ulasanList = [
     {
       'user': 'Rani',
       'film': 'Laskar Pelangi',
@@ -16,15 +21,69 @@ class UlasanScreen extends StatelessWidget {
       'review': 'Serem banget, tapi seru!',
       'rating': 4,
     },
-    {
-      'user': 'Dika',
-      'film': 'Warkop DKI Reborn',
-      'review': 'Lucu parah sampe ketawa ngakak!',
-      'rating': 3,
-    },
   ];
 
-  // Widget pembentuk rating bintang
+  void _showTambahUlasanDialog() {
+    final userController = TextEditingController();
+    final filmController = TextEditingController();
+    final reviewController = TextEditingController();
+    int rating = 3;
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Tambah Ulasan'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                  controller: userController,
+                  decoration: const InputDecoration(labelText: 'Nama')),
+              TextField(
+                  controller: filmController,
+                  decoration: const InputDecoration(labelText: 'Judul Film')),
+              TextField(
+                  controller: reviewController,
+                  decoration: const InputDecoration(labelText: 'Review')),
+              const SizedBox(height: 10),
+              Text("Rating: $rating"),
+              Slider(
+                value: rating.toDouble(),
+                min: 1,
+                max: 5,
+                divisions: 4,
+                label: rating.toString(),
+                onChanged: (val) {
+                  setState(() {
+                    rating = val.toInt();
+                  });
+                },
+              )
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal")),
+          ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  ulasanList.add({
+                    'user': userController.text,
+                    'film': filmController.text,
+                    'review': reviewController.text,
+                    'rating': rating,
+                  });
+                });
+                Navigator.pop(context);
+              },
+              child: const Text("Simpan")),
+        ],
+      ),
+    );
+  }
+
   Widget _buildRatingStars(int rating) {
     return Row(
       children: List.generate(5, (index) {
@@ -42,7 +101,12 @@ class UlasanScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ulasan Film'),
-        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _showTambahUlasanDialog,
+          ),
+        ],
       ),
       body: ListView.builder(
         itemCount: ulasanList.length,
@@ -51,47 +115,19 @@ class UlasanScreen extends StatelessWidget {
           final ulasan = ulasanList[index];
           return Card(
             margin: const EdgeInsets.symmetric(vertical: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 3,
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const CircleAvatar(
-                        radius: 20,
-                        child: Icon(Icons.person, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        ulasan['user'] ?? '',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
                   Text(
-                    'Film: ${ulasan['film']}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.w600,
-                    ),
+                    ulasan['user'],
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  _buildRatingStars(ulasan['rating'] ?? 0),
-                  const SizedBox(height: 8),
-                  Text(
-                    ulasan['review'] ?? '',
-                    style: const TextStyle(fontSize: 15),
-                  ),
+                  Text("Film: ${ulasan['film']}"),
+                  _buildRatingStars(ulasan['rating']),
+                  Text(ulasan['review']),
                 ],
               ),
             ),
