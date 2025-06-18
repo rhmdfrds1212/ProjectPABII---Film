@@ -45,6 +45,7 @@ dependencies:
   shimmer: ^3.0.0
   geolocator: ^14.0.1
   google_generative_ai: ^0.4.7
+  file_picker: ^10.2.0
   flutter_image_compress: ^2.4.0
 
 dev_dependencies:
@@ -75,6 +76,9 @@ flutter:
     - assets/film3.jpg
     - assets/film4.jpg
     - assets/film5.jpg
+    - assets/aktor1.jpg
+    - assets/aktor2.jpg
+    - assets/aktor3.png
     - assets/fasum_icon_512.png
     - assets/fasum_icon.png
     - assets/film_icon.png
