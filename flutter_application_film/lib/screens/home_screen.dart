@@ -36,28 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
           "createdAt": DateTime.now().toIso8601String(),
           "imageAsset": "assets/film6.jpg"
         },
-        {
-          "fullName": "Admin",
-          "description":
-              "Drama dan komedi penuh tawa dan kekonyolan serta menyentuh hati.",
-          "category": "Drama",
-          "createdAt": DateTime.now().toIso8601String(),
-          "imageAsset": "assets/film7.jpg"
-        },
-        {
-          "fullName": "Admin",
-          "description": "Drama romantis yang menyentuh hati.",
-          "category": "Romansa",
-          "createdAt": DateTime.now().toIso8601String(),
-          "imageAsset": "assets/film8.jpg"
-        },
-        {
-          "fullName": "Admin",
-          "description": "Drama menceritakan tentang jendela seribu sungai.",
-          "category": "Drama",
-          "createdAt": DateTime.now().toIso8601String(),
-          "imageAsset": "assets/film9.jpg"
-        },
       ];
 
       for (var post in posts) {
@@ -78,6 +56,73 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(builder: (_) => const SignInScreen()),
       (route) => false,
+    );
+  }
+
+  void _showAddFilmDialog(BuildContext context) {
+    final descriptionController = TextEditingController();
+    final categoryController = TextEditingController();
+    final imageAssetController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Tambah Film Baru"),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: descriptionController,
+                decoration: const InputDecoration(labelText: "Deskripsi"),
+              ),
+              TextField(
+                controller: categoryController,
+                decoration: const InputDecoration(labelText: "Kategori"),
+              ),
+              TextField(
+                controller: imageAssetController,
+                decoration: const InputDecoration(
+                  labelText: "Asset Gambar (contoh: assets/film10.jpg)",
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text("Batal"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            child: const Text("Simpan"),
+            onPressed: () async {
+              final deskripsi = descriptionController.text.trim();
+              final kategori = categoryController.text.trim();
+              final gambar = imageAssetController.text.trim();
+
+              if (deskripsi.isNotEmpty &&
+                  kategori.isNotEmpty &&
+                  gambar.isNotEmpty) {
+                try {
+                  await FirebaseFirestore.instance.collection('posts').add({
+                    "fullName":
+                        FirebaseAuth.instance.currentUser?.email ?? "Pengguna",
+                    "description": deskripsi,
+                    "category": kategori,
+                    "createdAt": DateTime.now().toIso8601String(),
+                    "imageAsset": gambar,
+                  });
+                  Navigator.pop(context);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Gagal menambahkan film: $e")),
+                  );
+                }
+              }
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -183,6 +228,13 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.account_circle), label: "Profil"),
         ],
       ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: () => _showAddFilmDialog(context),
+              backgroundColor: Colors.green,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 }
