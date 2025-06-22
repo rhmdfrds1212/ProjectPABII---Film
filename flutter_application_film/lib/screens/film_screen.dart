@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_film/screens/detail_screen.dart';
+import 'package:file_picker/file_picker.dart';
 
 class FilmScreen extends StatefulWidget {
-  const FilmScreen({super.key});
+  final String? userRole;
+  const FilmScreen({super.key, required this.userRole});
 
   @override
   State<FilmScreen> createState() => _FilmScreenState();
@@ -24,26 +26,114 @@ class _FilmScreenState extends State<FilmScreen> {
       'genre': 'Drama',
       'poster': 'assets/film2.jpg',
     },
-    {
-      'title': 'Warkop DKI Reborn',
-      'genre': 'Komedi',
-      'poster': 'assets/film3.jpg',
-    },
-    {
-      'title': 'Dilan 1990',
-      'genre': 'Romansa',
-      'poster': 'assets/film4.jpg',
-    },
-    {
-      'title': 'Gundala',
-      'genre': 'Aksi',
-      'poster': 'assets/film5.jpg',
-    },
   ];
+
+  // Menambahkan Film
+  void _addFilm() {
+    _showFilmDialog();
+  }
+
+  // Mengedit Film
+  void _editFilm(int index) {
+    final film = filmList[index];
+    _showFilmDialog(editIndex: index, filmData: film);
+  }
+
+  // Menghapus Film
+  void _deleteFilm(int index) {
+    setState(() {
+      filmList.removeAt(index);
+    });
+  }
+
+  // Dialog Tambah/Edit Film
+  void _showFilmDialog({int? editIndex, Map<String, String>? filmData}) {
+    final titleController = TextEditingController(text: filmData?['title']);
+    final genreController = TextEditingController(text: filmData?['genre']);
+    String? filePath = filmData?['poster']; // untuk menyimpan file path
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(editIndex == null ? 'Tambah Film' : 'Edit Film'),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Judul Film'),
+              ),
+              TextField(
+                controller: genreController,
+                decoration: const InputDecoration(labelText: 'Genre'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  FilePickerResult? result =
+                      await FilePicker.platform.pickFiles(
+                    type: FileType.image,
+                  );
+
+                  if (result != null && result.files.single.path != null) {
+                    setState(() {
+                      filePath = result.files.single.path!;
+                    });
+                  }
+                },
+                icon: const Icon(Icons.image),
+                label: const Text("Pilih Gambar Poster"),
+              ),
+              if (filePath != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    filePath!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                )
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final title = titleController.text.trim();
+              final genre = genreController.text.trim();
+
+              if (title.isEmpty || genre.isEmpty || filePath == null) return;
+
+              final newFilm = {
+                'title': title,
+                'genre': genre,
+                'poster': filePath!, // menyimpan path lokal file
+              };
+
+              setState(() {
+                if (editIndex != null) {
+                  filmList[editIndex] = newFilm;
+                } else {
+                  filmList.add(newFilm);
+                }
+              });
+
+              Navigator.pop(context);
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Filter genre + search
+    // Filter
     final filteredList = filmList.where((film) {
       final matchGenre =
           selectedGenre == 'Semua' || film['genre'] == selectedGenre;
@@ -59,9 +149,13 @@ class _FilmScreenState extends State<FilmScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Film Populer')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addFilm,
+        child: const Icon(Icons.add),
+      ),
       body: Column(
         children: [
-          // 🔍 Search TextField
+          // 🔍 Search
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
             child: TextField(
@@ -71,7 +165,6 @@ class _FilmScreenState extends State<FilmScreen> {
                 hintText: 'Cari film...',
                 filled: true,
                 fillColor: Colors.grey[200],
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -80,7 +173,7 @@ class _FilmScreenState extends State<FilmScreen> {
             ),
           ),
 
-          // 🎭 Genre Filter Dropdown
+          // 🎭 Dropdown Genre
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10),
             child: Align(
@@ -99,7 +192,7 @@ class _FilmScreenState extends State<FilmScreen> {
             ),
           ),
 
-          // 🎞️ Film Grid
+          // 🎞️ Grid Film
           Expanded(
             child: filteredList.isEmpty
                 ? const Center(child: Text("Tidak ada film yang cocok."))
@@ -115,71 +208,106 @@ class _FilmScreenState extends State<FilmScreen> {
                     ),
                     itemBuilder: (context, index) {
                       final film = filteredList[index];
-                      return InkWell(
-                        onTap: () async {
-                          final byteData = await DefaultAssetBundle.of(context)
-                              .load(film['poster']!);
-                          final imageBytes = byteData.buffer.asUint8List();
-                          final imageBase64 = base64Encode(imageBytes);
+                      final realIndex = filmList.indexOf(film);
 
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DetailScreen(
-                                imageBase64: imageBase64,
-                                description: film['title']!,
-                                createdAt: DateTime.now(),
-                                fullName: "Admin",
-                                latitude: 0.0,
-                                longitude: 0.0,
-                                category: film['genre']!,
-                                heroTag: 'film-$index',
-                              ),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Hero(
-                                  tag: 'film-$index',
-                                  child: ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(12)),
-                                    child: Image.asset(
-                                      film['poster']!,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
+                      return Stack(
+                        children: [
+                          InkWell(
+                            onTap: () async {
+                              final byteData =
+                                  await DefaultAssetBundle.of(context)
+                                      .load(film['poster']!);
+                              final imageBytes = byteData.buffer.asUint8List();
+                              final imageBase64 = base64Encode(imageBytes);
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => DetailScreen(
+                                    imageBase64: imageBase64,
+                                    description: film['title']!,
+                                    createdAt: DateTime.now(),
+                                    fullName: "Admin",
+                                    latitude: 0.0,
+                                    longitude: 0.0,
+                                    category: film['genre']!,
+                                    heroTag: 'film-$index',
                                   ),
                                 ),
+                              );
+                            },
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  film['title']!,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Hero(
+                                      tag: 'film-$index',
+                                      child: ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                          top: Radius.circular(12),
+                                        ),
+                                        child: Image.asset(
+                                          film['poster']!,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      film['title']!,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0),
+                                    child: Text(
+                                      film['genre']!,
+                                      style:
+                                          const TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Text(
-                                  film['genre']!,
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                          Positioned(
+                            top: 6,
+                            right: 6,
+                            child: PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _editFilm(realIndex);
+                                } else if (value == 'delete') {
+                                  _deleteFilm(realIndex);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Edit'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Hapus'),
+                                ),
+                              ],
+                              icon: const Icon(Icons.more_vert, size: 20),
+                            ),
+                          )
+                        ],
                       );
                     },
                   ),

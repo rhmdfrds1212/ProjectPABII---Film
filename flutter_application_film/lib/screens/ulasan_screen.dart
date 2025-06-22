@@ -1,7 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class UlasanScreen extends StatefulWidget {
-  const UlasanScreen({super.key});
+  final String? userRole;
+  const UlasanScreen({super.key, required this.userRole});
 
   @override
   State<UlasanScreen> createState() => _UlasanScreenState();
@@ -22,63 +24,104 @@ class _UlasanScreenState extends State<UlasanScreen> {
       'rating': 4,
     },
   ];
+  String currentUser = FirebaseAuth.instance.currentUser?.email ?? '';
 
-  void _showTambahUlasanDialog() {
-    final userController = TextEditingController();
-    final filmController = TextEditingController();
-    final reviewController = TextEditingController();
-    int rating = 3;
+  void _showUlasanDialog({int? editIndex}) {
+    final isEdit = editIndex != null;
+    final existing = isEdit ? ulasanList[editIndex] : null;
+
+    final userController = TextEditingController(text: existing?['user'] ?? '');
+    final filmController = TextEditingController(text: existing?['film'] ?? '');
+    final reviewController =
+        TextEditingController(text: existing?['review'] ?? '');
+    int rating = existing?['rating'] ?? 3;
 
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Tambah Ulasan'),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                  controller: userController,
-                  decoration: const InputDecoration(labelText: 'Nama')),
-              TextField(
-                  controller: filmController,
-                  decoration: const InputDecoration(labelText: 'Judul Film')),
-              TextField(
-                  controller: reviewController,
-                  decoration: const InputDecoration(labelText: 'Review')),
-              const SizedBox(height: 10),
-              Text("Rating: $rating"),
-              Slider(
-                value: rating.toDouble(),
-                min: 1,
-                max: 5,
-                divisions: 4,
-                label: rating.toString(),
-                onChanged: (val) {
-                  setState(() {
-                    rating = val.toInt();
-                  });
-                },
-              )
-            ],
+      builder: (_) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(isEdit ? 'Edit Ulasan' : 'Tambah Ulasan'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                    controller: userController,
+                    decoration: const InputDecoration(labelText: 'Nama')),
+                TextField(
+                    controller: filmController,
+                    decoration: const InputDecoration(labelText: 'Judul Film')),
+                TextField(
+                    controller: reviewController,
+                    decoration: const InputDecoration(labelText: 'Review')),
+                const SizedBox(height: 10),
+                Text("Rating: $rating"),
+                Slider(
+                  value: rating.toDouble(),
+                  min: 1,
+                  max: 5,
+                  divisions: 4,
+                  label: rating.toString(),
+                  onChanged: (val) {
+                    setDialogState(() {
+                      rating = val.toInt();
+                    });
+                  },
+                )
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
+          actions: [
+            TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Batal")),
-          ElevatedButton(
+              child: const Text("Batal"),
+            ),
+            ElevatedButton(
               onPressed: () {
+                final newUlasan = {
+                  'user': userController.text,
+                  'film': filmController.text,
+                  'review': reviewController.text,
+                  'rating': rating,
+                };
+
                 setState(() {
-                  ulasanList.add({
-                    'user': userController.text,
-                    'film': filmController.text,
-                    'review': reviewController.text,
-                    'rating': rating,
-                  });
+                  if (isEdit) {
+                    ulasanList[editIndex!] = newUlasan;
+                  } else {
+                    ulasanList.add(newUlasan);
+                  }
                 });
+
                 Navigator.pop(context);
               },
-              child: const Text("Simpan")),
+              child: const Text("Simpan"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(int index) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Hapus Ulasan"),
+        content: const Text("Yakin ingin menghapus ulasan ini?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Batal"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                ulasanList.removeAt(index);
+              });
+              Navigator.pop(context);
+            },
+            child: const Text("Hapus"),
+          ),
         ],
       ),
     );
@@ -104,7 +147,7 @@ class _UlasanScreenState extends State<UlasanScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: _showTambahUlasanDialog,
+            onPressed: () => _showUlasanDialog(),
           ),
         ],
       ),
@@ -128,6 +171,19 @@ class _UlasanScreenState extends State<UlasanScreen> {
                   Text("Film: ${ulasan['film']}"),
                   _buildRatingStars(ulasan['rating']),
                   Text(ulasan['review']),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showUlasanDialog(editIndex: index),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () => _confirmDelete(index),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

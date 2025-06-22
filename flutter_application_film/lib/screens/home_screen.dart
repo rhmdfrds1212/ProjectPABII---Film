@@ -18,10 +18,29 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
+  String? _userRole;
+
   @override
   void initState() {
     super.initState();
     _addInitialPosts();
+    getUserRole();
+  }
+
+  Future<void> getUserRole() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (snapshot.exists) {
+        setState(() {
+          _userRole = snapshot.data()?['role'] ?? 'user';
+        });
+      }
+    }
   }
 
   Future<void> _addInitialPosts() async {
@@ -187,13 +206,15 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       case 1:
-        return const FilmScreen();
+        return const FilmScreen(userRole: '',);
+      case 1:
+        return FilmScreen(userRole: _userRole);
       case 2:
-        return const AktorScreen();
+        return AktorScreen(userRole: _userRole);
       case 3:
-        return const UlasanScreen();
+        return UlasanScreen(userRole: _userRole);
       case 4:
-        return const ProfileScreen();
+        return ProfileScreen(userRole: _userRole);
       default:
         return const Center(child: Text("Halaman tidak ditemukan."));
     }
@@ -228,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.account_circle), label: "Profil"),
         ],
       ),
-      floatingActionButton: _selectedIndex == 0
+      floatingActionButton: _selectedIndex == 0 && _userRole == 'admin'
           ? FloatingActionButton(
               onPressed: () => _showAddFilmDialog(context),
               backgroundColor: Colors.green,

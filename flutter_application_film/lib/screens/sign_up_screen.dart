@@ -65,7 +65,9 @@ class SignUpScreenState extends State<SignUpScreen> {
                       prefixIcon: Icon(Icons.email),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || !_isValidEmail(value)) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !_isValidEmail(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -83,7 +85,9 @@ class SignUpScreenState extends State<SignUpScreen> {
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
@@ -114,11 +118,14 @@ class SignUpScreenState extends State<SignUpScreen> {
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          _isConfirmPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
-                            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                            _isConfirmPasswordVisible =
+                                !_isConfirmPasswordVisible;
                           });
                         },
                       ),
@@ -172,6 +179,7 @@ class SignUpScreenState extends State<SignUpScreen> {
         'fullName': fullName,
         'email': email,
         'createdAt': Timestamp.now(),
+        'role': 'user',
       });
 
       if (!mounted) return;
@@ -191,12 +199,14 @@ class SignUpScreenState extends State<SignUpScreen> {
 
   // Show error message in snackbar
   void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   // Email validator
   bool _isValidEmail(String email) {
-    final emailRegex = r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$";
+    final emailRegex =
+        r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$";
     return RegExp(emailRegex).hasMatch(email);
   }
 
